@@ -21,19 +21,22 @@ struct ChatView: View {
                 // Input Area
                 inputArea
             }
-            .background(AppTheme.Colors.chatBackground)
+            .background(
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
+            )
             .navigationTitle("Trip Planning")
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 checkIfTripIsSaved()
             }
-            .onChange(of: chatViewModel.currentTrip) { _ in
+            .onChange(of: chatViewModel.currentTrip) {
                 checkIfTripIsSaved()
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Menu {
-                        if let trip = chatViewModel.currentTrip, !isTripSaved {
+                        if let _ = chatViewModel.currentTrip, !isTripSaved {
                             Button("Save Trip") {
                                 saveTrip()
                             }
@@ -63,7 +66,6 @@ struct ChatView: View {
                     } label: {
                         HStack(spacing: AppTheme.Spacing.xs) {
                             Image(systemName: "ellipsis.circle")
-                                .foregroundColor(AppTheme.Colors.primary)
                             
                             if isTripSaved {
                                 Image(systemName: "bookmark.fill")
@@ -95,14 +97,14 @@ struct ChatView: View {
                 .padding(.horizontal, AppTheme.Spacing.md)
                 .padding(.vertical, AppTheme.Spacing.sm)
             }
-            .onChange(of: chatViewModel.messages.count) { _ in
+            .onChange(of: chatViewModel.messages.count) {
                 withAnimation(.easeOut(duration: 0.3)) {
                     if let lastMessage = chatViewModel.messages.last {
                         proxy.scrollTo(lastMessage.id, anchor: .bottom)
                     }
                 }
             }
-            .onChange(of: chatViewModel.isTyping) { isTyping in
+            .onChange(of: chatViewModel.isTyping) { _, isTyping in
                 if isTyping {
                     withAnimation(.easeOut(duration: 0.3)) {
                         proxy.scrollTo("typing", anchor: .bottom)
@@ -161,6 +163,7 @@ struct ChatView: View {
                     .onSubmit {
                         sendMessage()
                     }
+                    .submitLabel(.go)
                     .accessibilityLabel("Message input field")
                     .accessibilityHint("Type your message about trip planning")
                 
@@ -169,20 +172,17 @@ struct ChatView: View {
                         .font(.title2)
                         .foregroundColor(.white)
                         .frame(width: 44, height: 44)
-                        .background(
-                            chatViewModel.currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?
-                                .secondary :
-                            AppTheme.Colors.primary
-                        )
-                        .clipShape(Circle())
                 }
+                .buttonStyle(.glassProminent)
                 .disabled(chatViewModel.currentInput.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 .accessibilityLabel("Send message")
                 .accessibilityHint("Tap to send your message")
             }
             .padding(.horizontal, AppTheme.Spacing.md)
             .padding(.vertical, AppTheme.Spacing.md)
-            .background(AppTheme.Colors.background)
+            .background(
+                .ultraThinMaterial
+            )
         }
     }
     
@@ -220,13 +220,21 @@ struct ChatBubble: View {
                         .foregroundColor(.white)
                         .padding(.horizontal, AppTheme.Spacing.md)
                         .padding(.vertical, AppTheme.Spacing.sm)
-                        .background(UnevenRoundedRectangle(cornerRadii: .init(
-                            topLeading: AppTheme.CornerRadius.lg,
-                            bottomLeading: AppTheme.CornerRadius.sm,
-                            bottomTrailing: AppTheme.CornerRadius.lg,
-                            topTrailing: AppTheme.CornerRadius.lg
-                        ), style: .continuous)
-                        .foregroundStyle(AppTheme.Colors.userMessageBackground))
+                        .background(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.lg)
+                        .fill(.ultraThinMaterial)
+                        .overlay(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.lg)
+                            .fill(AppTheme.Colors.primary)
+                            .stroke(
+                                LinearGradient(
+                                    colors: [
+                                        AppTheme.Colors.primary.opacity(0.25),
+                                        AppTheme.Colors.primary.opacity(0.08)
+                                    ],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                ), lineWidth: 1
+                            )
+                        ))
                     
                     Text(formatTime(message.timestamp))
                         .font(.caption)
@@ -243,11 +251,6 @@ struct ChatBubble: View {
                             .scaledToFit()
                             .clipShape(Circle())
                             .frame(width: 32, height: 32)
-                            .overlay(
-                                Image(systemName: "sparkles")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.white)
-                            )
                             .accessibilityHidden(true)
                         
                         Text(message.content)
@@ -255,13 +258,21 @@ struct ChatBubble: View {
                             .foregroundColor(.primary)
                             .padding(.horizontal, AppTheme.Spacing.md)
                             .padding(.vertical, AppTheme.Spacing.sm)
-                            .background(UnevenRoundedRectangle(cornerRadii: .init(
-                                topLeading: AppTheme.CornerRadius.lg,
-                                bottomLeading: AppTheme.CornerRadius.lg,
-                                bottomTrailing: AppTheme.CornerRadius.sm,
-                                topTrailing: AppTheme.CornerRadius.lg
-                            ), style: .continuous)
-                            .foregroundStyle(AppTheme.Colors.aiMessageBackground))
+                            .background(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.lg)
+                            .fill(.ultraThinMaterial)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.lg)
+                                .stroke(
+                                    LinearGradient(
+                                        colors: [
+                                            AppTheme.Colors.secondary.opacity(0.22),
+                                            AppTheme.Colors.secondary.opacity(0.08)
+                                        ],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    ), lineWidth: 1
+                                )
+                            ))
                     }
                     
                     Text(formatTime(message.timestamp))
@@ -320,7 +331,25 @@ struct TypingIndicator: View {
                         bottomTrailing: AppTheme.CornerRadius.sm,
                         topTrailing: AppTheme.CornerRadius.lg
                     ), style: .continuous)
-                    .foregroundStyle(AppTheme.Colors.aiMessageBackground))
+                    .fill(.ultraThinMaterial)
+                    .overlay(
+                        UnevenRoundedRectangle(cornerRadii: .init(
+                            topLeading: AppTheme.CornerRadius.lg,
+                            bottomLeading: AppTheme.CornerRadius.lg,
+                            bottomTrailing: AppTheme.CornerRadius.sm,
+                            topTrailing: AppTheme.CornerRadius.lg
+                        ), style: .continuous)
+                        .stroke(
+                            LinearGradient(
+                                colors: [
+                                    AppTheme.Colors.secondary.opacity(0.22),
+                                    AppTheme.Colors.secondary.opacity(0.08)
+                                ],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            ), lineWidth: 1
+                        )
+                    ))
                 }
             }
             

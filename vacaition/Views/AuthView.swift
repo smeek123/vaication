@@ -33,15 +33,8 @@ struct AuthView: View {
                 .padding(.top, AppTheme.Spacing.xl)
             }
             .background(
-                LinearGradient(
-                    colors: [
-                        AppTheme.Colors.background,
-                        AppTheme.Colors.background.opacity(0.8)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
             )
             .navigationBarHidden(true)
             .alert("Password Reset", isPresented: $showPasswordReset) {
@@ -290,13 +283,7 @@ struct CustomTextField: View {
             }
         }
         .padding(AppTheme.Spacing.md)
-        .background(AppTheme.Colors.cardBackground)
-        .cornerRadius(AppTheme.CornerRadius.md)
-        .shadow(color: AppTheme.Shadows.light, radius: 3, x: 0, y: 1)
-        .overlay(
-            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.md)
-                .stroke(AppTheme.Colors.primary.opacity(0.2), lineWidth: 1)
-        )
+        .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.md, borderTint: AppTheme.Colors.primary)
         .accessibilityElement(children: .combine)
     }
 }

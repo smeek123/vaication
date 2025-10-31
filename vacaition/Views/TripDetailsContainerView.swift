@@ -97,14 +97,15 @@ struct EmptyTripStateView: View {
                     }
                 }
                 .padding(AppTheme.Spacing.lg)
-                .background(AppTheme.Colors.cardBackground)
-                .cornerRadius(AppTheme.CornerRadius.lg)
-                .shadow(color: AppTheme.Shadows.light, radius: 5, x: 0, y: 2)
+                .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg, borderTint: AppTheme.Colors.primary)
                 
                 Spacer()
             }
             .padding(.horizontal, AppTheme.Spacing.lg)
-            .background(AppTheme.Colors.background)
+            .background(
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
+            )
             .navigationTitle("Trip Planning")
             .navigationBarTitleDisplayMode(.inline)
         }

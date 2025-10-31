@@ -13,8 +13,8 @@ struct TripDetailsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: AppTheme.Spacing.lg) {
-                    // Trip Header Card
-                    tripHeaderCard
+					// Trip Header Card
+					TripHeaderCard(trip: trip, isTripSaved: isTripSaved)
                     
                     // Quick Stats
                     quickStatsSection
@@ -36,7 +36,10 @@ struct TripDetailsView: View {
                 .padding(.horizontal, AppTheme.Spacing.md)
                 .padding(.top, AppTheme.Spacing.md)
             }
-            .background(AppTheme.Colors.background)
+            .background(
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
+            )
             .navigationTitle("Trip Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -72,7 +75,6 @@ struct TripDetailsView: View {
                         .accessibilityLabel("Delete this trip")
                     } label: {
                         Image(systemName: "ellipsis.circle")
-                            .foregroundColor(AppTheme.Colors.primary)
                             .accessibilityLabel("Trip options menu")
                     }
                 }
@@ -89,99 +91,6 @@ struct TripDetailsView: View {
         .onAppear {
             checkIfTripIsSaved()
         }
-    }
-    
-    private var tripHeaderCard: some View {
-        VStack(spacing: AppTheme.Spacing.md) {
-            // Destination
-            HStack {
-                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
-                    Text(trip.destination)
-                        .font(.title)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                        .accessibilityAddTraits(.isHeader)
-                    
-                    Text(formatDateRange(trip.startDate, trip.endDate))
-                        .font(.body)
-                        .foregroundColor(.secondary)
-                }
-                
-                Spacer()
-                
-                // Status Badge
-                HStack(spacing: AppTheme.Spacing.xs) {
-                    Circle()
-                        .fill(trip.isCompleted ? AppTheme.Colors.success : AppTheme.Colors.primary)
-                        .frame(width: 8, height: 8)
-                    
-                    Text(trip.isCompleted ? "Completed" : "Planned")
-                        .font(.caption)
-                        .fontWeight(.medium)
-                        .foregroundColor(.primary)
-                }
-                .padding(.horizontal, AppTheme.Spacing.sm)
-                .padding(.vertical, AppTheme.Spacing.xs)
-                .background(AppTheme.Colors.cardBackground)
-                .cornerRadius(AppTheme.CornerRadius.sm)
-                .accessibilityLabel("Trip status: \(trip.isCompleted ? "Completed" : "Planned")")
-                
-                // Saved Badge
-                if isTripSaved {
-                    HStack(spacing: AppTheme.Spacing.xs) {
-                        Image(systemName: "bookmark.fill")
-                            .font(.caption)
-                            .foregroundColor(AppTheme.Colors.success)
-                        
-                        Text("Saved")
-                            .font(.caption)
-                            .fontWeight(.medium)
-                            .foregroundColor(AppTheme.Colors.success)
-                    }
-                    .padding(.horizontal, AppTheme.Spacing.sm)
-                    .padding(.vertical, AppTheme.Spacing.xs)
-                    .background(AppTheme.Colors.success.opacity(0.1))
-                    .cornerRadius(AppTheme.CornerRadius.sm)
-                    .accessibilityLabel("Trip is saved")
-                }
-            }
-            
-            // Budget
-            HStack {
-                Image(systemName: "dollarsign.circle.fill")
-                    .foregroundColor(AppTheme.Colors.primary)
-                    .font(.title2)
-                
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Total Budget")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("$\(Int(trip.budget))")
-                        .font(.title2)
-                        .fontWeight(.bold)
-                        .foregroundColor(.primary)
-                }
-                
-                Spacer()
-                
-                VStack(alignment: .trailing, spacing: 2) {
-                    Text("Per Day")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
-                    
-                    Text("$\(Int(trip.budget / Double(tripDuration)))")
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                }
-            }
-        }
-        .padding(AppTheme.Spacing.lg)
-        .background(AppTheme.Colors.cardBackground)
-        .cornerRadius(AppTheme.CornerRadius.lg)
-        .shadow(color: AppTheme.Shadows.light, radius: 8, x: 0, y: 4)
-        .accessibilityElement(children: .combine)
     }
     
     private var quickStatsSection: some View {
@@ -418,9 +327,7 @@ struct StatCard: View {
         }
         .frame(maxWidth: .infinity)
         .padding(AppTheme.Spacing.md)
-        .background(AppTheme.Colors.cardBackground)
-        .cornerRadius(AppTheme.CornerRadius.md)
-        .shadow(color: AppTheme.Shadows.light, radius: 3, x: 0, y: 2)
+        .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.md, borderTint: color)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")
     }
@@ -444,8 +351,7 @@ struct InterestChip: View {
         }
         .padding(.horizontal, AppTheme.Spacing.sm)
         .padding(.vertical, AppTheme.Spacing.xs)
-        .background(AppTheme.Colors.primary.opacity(0.1))
-        .cornerRadius(AppTheme.CornerRadius.sm)
+        .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.sm, borderTint: AppTheme.Colors.primary)
         .accessibilityLabel("Interest: \(interest.name)")
     }
 }
@@ -493,9 +399,7 @@ struct HotelCard: View {
             .padding(.horizontal, AppTheme.Spacing.sm)
         }
         .frame(width: 200)
-        .background(AppTheme.Colors.cardBackground)
-        .cornerRadius(AppTheme.CornerRadius.md)
-        .shadow(color: AppTheme.Shadows.light, radius: 5, x: 0, y: 2)
+        .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.md, borderTint: AppTheme.Colors.primary)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Hotel \(hotel.name), \(String(format: "%.1f", hotel.rating)) stars, $\(Int(hotel.pricePerNight)) per night")
     }
@@ -557,9 +461,7 @@ struct ItineraryItemRow: View {
                     .foregroundColor(.secondary)
             }
             .padding(AppTheme.Spacing.md)
-            .background(AppTheme.Colors.cardBackground)
-            .cornerRadius(AppTheme.CornerRadius.md)
-            .shadow(color: AppTheme.Shadows.light, radius: 3, x: 0, y: 1)
+            .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.md, borderTint: Color(item.category.color))
         }
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(item.title), \(item.time), \(item.description)")
@@ -641,8 +543,7 @@ struct ItineraryDetailSheet: View {
                         }
                     }
                     .padding(AppTheme.Spacing.lg)
-                    .background(AppTheme.Colors.cardBackground)
-                    .cornerRadius(AppTheme.CornerRadius.lg)
+                    .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg, borderTint: AppTheme.Colors.primary)
                     
                     // Details
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
@@ -651,8 +552,7 @@ struct ItineraryDetailSheet: View {
                         DetailRow(icon: "calendar", title: "Date", value: formatDate(item.date))
                     }
                     .padding(AppTheme.Spacing.lg)
-                    .background(AppTheme.Colors.cardBackground)
-                    .cornerRadius(AppTheme.CornerRadius.lg)
+                    .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg, borderTint: AppTheme.Colors.primary)
                     
                     // Description
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
@@ -667,12 +567,14 @@ struct ItineraryDetailSheet: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .padding(AppTheme.Spacing.lg)
-                    .background(AppTheme.Colors.cardBackground)
-                    .cornerRadius(AppTheme.CornerRadius.lg)
+                    .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg, borderTint: AppTheme.Colors.primary)
                 }
                 .padding(AppTheme.Spacing.md)
             }
-            .background(AppTheme.Colors.background)
+            .background(
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
+            )
             .navigationTitle("Activity Details")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {

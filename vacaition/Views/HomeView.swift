@@ -30,15 +30,8 @@ struct HomeView: View {
                 .padding(.top, AppTheme.Spacing.md)
             }
             .background(
-                LinearGradient(
-                    colors: [
-                        AppTheme.Colors.background,
-                        AppTheme.Colors.background.opacity(0.8)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
             )
             .navigationTitle("Vaication")
             .navigationBarTitleDisplayMode(.automatic)
@@ -241,9 +234,7 @@ struct QuickActionCard: View {
             }
             .frame(maxWidth: .infinity)
             .frame(height: 120)
-            .background(AppTheme.Colors.cardBackground)
-            .cornerRadius(AppTheme.CornerRadius.lg)
-            .shadow(color: AppTheme.Shadows.light, radius: 5, x: 0, y: 2)
+            .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg)
         }
         .accessibilityLabel("\(title): \(subtitle)")
         .accessibilityHint("Tap to \(subtitle.lowercased())")
@@ -278,9 +269,8 @@ struct FeatureRow: View {
             Spacer()
         }
         .padding(AppTheme.Spacing.md)
-        .background(AppTheme.Colors.cardBackground)
-        .cornerRadius(AppTheme.CornerRadius.md)
-        .shadow(color: AppTheme.Shadows.light, radius: 3, x: 0, y: 1)
+        .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.md, borderTint: AppTheme.Colors.secondary)
+        .shadow(color: AppTheme.Shadows.light, radius: 5, x: 0, y: 2)
         .accessibilityElement(children: .combine)
     }
 }

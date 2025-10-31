@@ -24,16 +24,18 @@ struct ProfileView: View {
                 .padding(.horizontal, AppTheme.Spacing.md)
                 .padding(.top, AppTheme.Spacing.md)
             }
-            .background(AppTheme.Colors.background)
+            .background(
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
+            )
             .navigationTitle("Profile")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .primaryAction) {
                     Button(action: {
                         showingSettings = true
                     }) {
                         Image(systemName: "gearshape.fill")
-                            .foregroundColor(AppTheme.Colors.primary)
                             .accessibilityLabel("Settings")
                     }
                 }
@@ -91,9 +93,7 @@ struct ProfileView: View {
             }
         }
         .padding(AppTheme.Spacing.lg)
-        .background(AppTheme.Colors.cardBackground)
-        .cornerRadius(AppTheme.CornerRadius.lg)
-        .shadow(color: AppTheme.Shadows.light, radius: 8, x: 0, y: 4)
+        .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.md, borderTint: AppTheme.Colors.secondary)
     }
     
     private var statsSection: some View {
@@ -108,24 +108,51 @@ struct ProfileView: View {
                 StatCard(
                     icon: "airplane",
                     title: "Trips",
-                    value: "\(userManager.currentUser?.savedTrips.count ?? 0)",
+                    value: "\(totalTrips)",
                     color: AppTheme.Colors.primary
                 )
                 
                 StatCard(
                     icon: "globe",
                     title: "Countries",
-                    value: "3",
+                    value: "\(uniqueCountryCount)",
                     color: AppTheme.Colors.secondary
                 )
                 
                 StatCard(
                     icon: "calendar",
                     title: "Days Traveled",
-                    value: "21",
+                    value: "\(totalDaysTraveled)",
                     color: AppTheme.Colors.accent
                 )
             }
+        }
+    }
+
+    // MARK: - Stats Computations
+    private var totalTrips: Int {
+        userManager.currentUser?.savedTrips.count ?? 0
+    }
+
+    private var uniqueCountryCount: Int {
+        guard let trips = userManager.currentUser?.savedTrips else { return 0 }
+        let countries: [String] = trips.map { trip in
+            // Heuristic: if destination contains a comma, take the last token as country
+            let parts = trip.destination.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            if let last = parts.last, parts.count > 1 {
+                return last
+            } else {
+                return trip.destination
+            }
+        }
+        return Set(countries).count
+    }
+
+    private var totalDaysTraveled: Int {
+        guard let trips = userManager.currentUser?.savedTrips else { return 0 }
+        return trips.filter { $0.isCompleted }.reduce(0) { total, trip in
+            let days = Calendar.current.dateComponents([.day], from: trip.startDate, to: trip.endDate).day ?? 0
+            return total + max(days, 0)
         }
     }
     
@@ -186,7 +213,7 @@ struct CompactTripCard: View {
                 .font(.headline)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)
-                .lineLimit(2)
+                .lineLimit(1)
                 .multilineTextAlignment(.leading)
             
             Text(formatDateRange(trip.startDate, trip.endDate))
@@ -208,9 +235,7 @@ struct CompactTripCard: View {
         }
         .frame(width: 160, height: 100)
         .padding(AppTheme.Spacing.md)
-        .background(AppTheme.Colors.cardBackground)
-        .cornerRadius(AppTheme.CornerRadius.lg)
-        .shadow(color: AppTheme.Shadows.light, radius: 5, x: 0, y: 2)
+        .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.md, borderTint: AppTheme.Colors.secondary)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("Trip to \(trip.destination) from \(formatDateRange(trip.startDate, trip.endDate)) with budget of $\(Int(trip.budget))")
     }
@@ -302,9 +327,7 @@ struct EmptyStateView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(AppTheme.Spacing.xl)
-        .background(AppTheme.Colors.cardBackground)
-        .cornerRadius(AppTheme.CornerRadius.lg)
-        .shadow(color: AppTheme.Shadows.light, radius: 3, x: 0, y: 1)
+        .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg)
     }
 }
 
@@ -332,11 +355,14 @@ struct SettingsView: View {
                 .padding(.horizontal, AppTheme.Spacing.md)
                 .padding(.top, AppTheme.Spacing.md)
             }
-            .background(AppTheme.Colors.background)
+            .background(
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
+            )
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
                         dismiss()
                     }
@@ -374,9 +400,7 @@ struct SettingsView: View {
                 Divider()
                     .padding(.leading, 56)
             }
-            .background(AppTheme.Colors.cardBackground)
-            .cornerRadius(AppTheme.CornerRadius.lg)
-            .shadow(color: AppTheme.Shadows.light, radius: 3, x: 0, y: 1)
+            .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg)
         }
     }
     
@@ -449,9 +473,7 @@ struct SettingsView: View {
                 .accessibilityLabel("Privacy policy")
                 .accessibilityHint("Tap to read the privacy policy")
             }
-            .background(AppTheme.Colors.cardBackground)
-            .cornerRadius(AppTheme.CornerRadius.lg)
-            .shadow(color: AppTheme.Shadows.light, radius: 3, x: 0, y: 1)
+            .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg)
         }
     }
     
@@ -486,9 +508,7 @@ struct SettingsView: View {
                     Spacer()
                 }
                 .padding(AppTheme.Spacing.md)
-                .background(AppTheme.Colors.cardBackground)
-                .cornerRadius(AppTheme.CornerRadius.lg)
-                .shadow(color: AppTheme.Shadows.light, radius: 3, x: 0, y: 1)
+                .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg)
             }
             .accessibilityLabel("Sign out of your account")
             .accessibilityHint("Tap to sign out")
@@ -527,17 +547,22 @@ struct EditProfileView: View {
                     Text("Profile Information")
                 }
             }
+            .scrollContentBackground(.hidden)
+            .background(
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
+            )
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {
                         dismiss()
                     }
                     .accessibilityLabel("Cancel editing profile")
                 }
                 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
                         // Save profile changes
                         dismiss()

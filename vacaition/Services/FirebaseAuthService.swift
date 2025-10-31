@@ -12,10 +12,11 @@ class FirebaseAuthService: ObservableObject {
     private let auth = Auth.auth()
     private let firestore = Firestore.firestore()
     private var cancellables = Set<AnyCancellable>()
+    private var authStateListenerHandle: AuthStateDidChangeListenerHandle?
     
     init() {
         // Listen to authentication state changes
-        auth.addStateDidChangeListener { [weak self] _, user in
+        authStateListenerHandle = auth.addStateDidChangeListener { [weak self] _, user in
             DispatchQueue.main.async {
                 if let user = user {
                     self?.isAuthenticated = true
@@ -25,6 +26,12 @@ class FirebaseAuthService: ObservableObject {
                     self?.currentUser = nil
                 }
             }
+        }
+    }
+    
+    deinit {
+        if let handle = authStateListenerHandle {
+            auth.removeStateDidChangeListener(handle)
         }
     }
     
@@ -83,7 +90,7 @@ class FirebaseAuthService: ObservableObject {
     
     func signOut() async {
         do {
-            try await auth.signOut()
+            try auth.signOut()
             DispatchQueue.main.async {
                 self.currentUser = nil
                 self.isAuthenticated = false

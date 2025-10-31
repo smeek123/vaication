@@ -9,35 +9,55 @@ import SwiftUI
 
 struct SavedTripsView: View {
     @EnvironmentObject var userManager: UserManager
-    
-    let columns = [
-        GridItem(.flexible(), spacing: 24),
-        GridItem(.flexible(), spacing: 24)
-    ]
+    @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LazyVGrid(columns: columns, spacing: 16)  {
-                    ForEach(userManager.currentUser?.savedTrips ?? []) { trip in
-                        NavigationLink(destination: TripDetailsView(trip: trip)) {
-                            CompactTripCard(trip: trip)
+            Group {
+                if userManager.isLoading {
+                    VStack(spacing: AppTheme.Spacing.md) {
+                        ProgressView()
+                            .tint(AppTheme.Colors.primary)
+                        Text("Loading saved trips...")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let trips = userManager.currentUser?.savedTrips, !trips.isEmpty {
+                    ScrollView {
+                        VStack(spacing: AppTheme.Spacing.md) {
+                            ForEach(trips.sorted { $0.createdAt > $1.createdAt }) { trip in
+                                NavigationLink(destination: TripDetailsView(trip: trip)) {
+                                    TripHeaderCard(trip: trip, isTripSaved: true)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, AppTheme.Spacing.md)
+                        .padding(.top, AppTheme.Spacing.md)
+                    }
+                    .background(
+                        LiquidGlassBackground()
+                            .ignoresSafeArea()
+                    )
+                } else {
+                    VStack {
+                        EmptyStateView(
+                            icon: "bookmark",
+                            title: "No Saved Trips",
+                            description: "Save trips to view them here.",
+                            actionTitle: "Plan a Trip"
+                        ) {
+                            // Could navigate to chat or trip planner
                         }
                     }
+                    .padding(.horizontal, AppTheme.Spacing.md)
+                    .padding(.top, AppTheme.Spacing.md)
+                    .background(
+                        LiquidGlassBackground()
+                            .ignoresSafeArea()
+                    )
                 }
-                .padding(.horizontal, 16)
             }
-            .background(
-                LinearGradient(
-                    colors: [
-                        AppTheme.Colors.background,
-                        AppTheme.Colors.background.opacity(0.8)
-                    ],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-                .ignoresSafeArea()
-            )
             .navigationTitle("Saved Trips")
             .navigationBarTitleDisplayMode(.inline)
         }
@@ -46,4 +66,6 @@ struct SavedTripsView: View {
 
 #Preview {
     SavedTripsView()
+        .environmentObject(ThemeManager())
+        .environmentObject(UserManager())
 }

@@ -31,6 +31,8 @@ struct ContentView: View {
                 .tag(2)
                 .accessibilityLabel("Profile tab")
         }
+        .tabViewStyle(.automatic)
+        .tabBarMinimizeBehavior(.onScrollDown)
         .accentColor(AppTheme.Colors.primary)
         .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
     }

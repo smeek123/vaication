@@ -4,8 +4,8 @@ struct AppTheme {
     // MARK: - Colors
     struct Colors {
         // Primary Colors
-        static let primary = Color("PrimaryColor")
-        static let secondary = Color("SecondaryColor")
+        static let primary = Color("MainColor")
+        static let secondary = Color("AltColor")
         static let accent = Color("AccentColor")
         
         // Background Colors

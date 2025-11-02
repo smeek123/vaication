@@ -6,6 +6,7 @@ struct ChatView: View {
     @EnvironmentObject var userManager: UserManager
     @FocusState private var isTextFieldFocused: Bool
     @State private var isTripSaved = false
+    @State private var showingTripDetails = false
     
     var body: some View {
         NavigationStack {
@@ -43,18 +44,11 @@ struct ChatView: View {
                             .accessibilityLabel("Save current trip")
                         }
                         
-                        if let trip = chatViewModel.currentTrip {
-                            NavigationLink(destination: TripDetailsView(trip: trip)) {
-                                Button("View Trip Details") {
-                                    // Navigate to trip details
-                                }
-                                .accessibilityLabel("View current trip details")
+                        if let _ = chatViewModel.currentTrip {
+                            Button("View Trip Details") {
+                                showingTripDetails = true
                             }
-                            
-                            Button("Clear Chat", role: .destructive) {
-                                chatViewModel.clearChat()
-                            }
-                            .accessibilityLabel("Clear chat history")
+                            .accessibilityLabel("View current trip details")
                         }
                         
                         if chatViewModel.errorMessage != nil {
@@ -62,6 +56,22 @@ struct ChatView: View {
                                 chatViewModel.retryLastMessage()
                             }
                             .accessibilityLabel("Retry the last message")
+                        }
+                        
+                        // Always show Clear Chat option when there are messages
+                        if !chatViewModel.messages.isEmpty {
+                            Button("Clear Chat", role: .destructive) {
+                                chatViewModel.clearChat()
+                            }
+                            .accessibilityLabel("Clear chat history")
+                        }
+                        
+                        // Fallback if menu would be empty (no messages, no trip, no error)
+                        if chatViewModel.messages.isEmpty && chatViewModel.currentTrip == nil && chatViewModel.errorMessage == nil {
+                            Button("About") {
+                                // Could open an about sheet if needed
+                            }
+                            .accessibilityLabel("About")
                         }
                     } label: {
                         HStack(spacing: AppTheme.Spacing.xs) {
@@ -75,6 +85,11 @@ struct ChatView: View {
                         }
                         .accessibilityLabel("Chat options menu")
                     }
+                }
+            }
+            .navigationDestination(isPresented: $showingTripDetails) {
+                if let trip = chatViewModel.currentTrip {
+                    TripDetailsView(trip: trip)
                 }
             }
         }

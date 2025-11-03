@@ -65,7 +65,7 @@ class FirebaseAuthService: ObservableObject {
             
         } catch {
             DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = self.userFriendlyErrorMessage(from: error, isSignUp: true)
                 self.isLoading = false
             }
         }
@@ -82,7 +82,7 @@ class FirebaseAuthService: ObservableObject {
             // User will be loaded via the auth state listener
         } catch {
             DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = self.userFriendlyErrorMessage(from: error, isSignUp: false)
                 self.isLoading = false
             }
         }
@@ -115,7 +115,7 @@ class FirebaseAuthService: ObservableObject {
             }
         } catch {
             DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = self.userFriendlyErrorMessage(from: error, isSignUp: false)
                 self.isLoading = false
             }
         }
@@ -127,7 +127,7 @@ class FirebaseAuthService: ObservableObject {
         firestore.collection("users").document(uid).getDocument { [weak self] document, error in
             DispatchQueue.main.async {
                 if let error = error {
-                    self?.errorMessage = error.localizedDescription
+                    self?.errorMessage = self?.userFriendlyErrorMessage(from: error, isSignUp: false) ?? "Unable to load your account. Please try again."
                     return
                 }
                 
@@ -176,7 +176,7 @@ class FirebaseAuthService: ObservableObject {
             }
         } catch {
             DispatchQueue.main.async {
-                self.errorMessage = error.localizedDescription
+                self.errorMessage = self.userFriendlyErrorMessage(from: error, isSignUp: false)
             }
         }
     }
@@ -197,5 +197,79 @@ class FirebaseAuthService: ObservableObject {
     
     func clearError() {
         errorMessage = nil
+    }
+    
+    private func userFriendlyErrorMessage(from error: Error, isSignUp: Bool) -> String {
+        let nsError = error as NSError
+        
+        // Check if it's a Firebase Auth error
+        if let errorCode = AuthErrorCode(rawValue: nsError.code) {
+            return authErrorCodeMessage(errorCode: errorCode, isSignUp: isSignUp)
+        }
+        
+        // Check if it's a Firestore error
+        if nsError.domain == "FIRFirestoreErrorDomain" {
+            return "Unable to save your information. Please check your connection and try again."
+        }
+        
+        // Generic error message
+        if isSignUp {
+            return "Unable to create account. Please check your information and try again."
+        } else {
+            return "Unable to sign in. Please check your email and password and try again."
+        }
+    }
+    
+    private func authErrorCodeMessage(errorCode: AuthErrorCode, isSignUp: Bool) -> String {
+        
+        switch errorCode {
+        case .wrongPassword, .userNotFound:
+            if isSignUp {
+                return "An account with this email already exists. Please sign in instead."
+            } else {
+                return "The email or password did not match our records. Please try again."
+            }
+        case .emailAlreadyInUse:
+            return "An account with this email already exists. Please sign in instead."
+        case .weakPassword:
+            return "Password is too weak. Please choose a stronger password with at least 6 characters."
+        case .invalidEmail:
+            return "Please enter a valid email address."
+        case .networkError:
+            return "Network error. Please check your connection and try again."
+        case .tooManyRequests:
+            return "Too many attempts. Please wait a moment and try again."
+        case .userDisabled:
+            return "This account has been disabled. Please contact support for assistance."
+        case .operationNotAllowed:
+            return "This sign-in method is not allowed. Please contact support."
+        case .missingEmail:
+            return "Please enter your email address."
+        case .requiresRecentLogin:
+            return "For your security, please sign in again to complete this action."
+        case .credentialAlreadyInUse:
+            return "This account is already linked to another sign-in method."
+        case .invalidCredential:
+            return "Invalid credentials. Please check your email and password."
+        case .accountExistsWithDifferentCredential:
+            return "An account already exists with the same email but different sign-in method."
+        case .invalidActionCode:
+            return "This link is invalid or has expired. Please request a new one."
+        case .expiredActionCode:
+            return "This link has expired. Please request a new password reset link."
+        case .invalidVerificationCode:
+            return "The verification code is invalid. Please try again."
+        case .invalidVerificationID:
+            return "Verification failed. Please try again."
+        case .sessionExpired:
+            return "Your session has expired. Please sign in again."
+        default:
+            // For any other errors, provide a generic but helpful message
+            if isSignUp {
+                return "Unable to create account. Please check your information and try again."
+            } else {
+                return "Unable to sign in. Please check your email and password and try again."
+            }
+        }
     }
 }

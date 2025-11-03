@@ -181,7 +181,7 @@ struct ProfileView: View {
             if let trips = userManager.currentUser?.savedTrips, !trips.isEmpty {
                 ScrollView(.horizontal, showsIndicators: false) {
                     HStack(spacing: AppTheme.Spacing.md) {
-                        ForEach(trips.prefix(3)) { trip in
+                        ForEach(trips.sorted(by: { $0.createdAt > $1.createdAt }).prefix(3)) { trip in
                             NavigationLink(destination: TripDetailsView(trip: trip)) {
                                 CompactTripCard(trip: trip)
                             }
@@ -336,6 +336,7 @@ struct SettingsView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userManager: UserManager
+    @State private var showingLogoutConfirmation = false
     
     var body: some View {
         NavigationStack {
@@ -361,6 +362,7 @@ struct SettingsView: View {
             )
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.large)
+            .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") {
@@ -486,7 +488,7 @@ struct SettingsView: View {
                 .accessibilityAddTraits(.isHeader)
             
             Button(action: {
-                userManager.signOut()
+                showingLogoutConfirmation = true
             }) {
                 HStack(spacing: AppTheme.Spacing.md) {
                     Image(systemName: "arrow.right.square.fill")
@@ -512,6 +514,14 @@ struct SettingsView: View {
             }
             .accessibilityLabel("Sign out of your account")
             .accessibilityHint("Tap to sign out")
+            .confirmationDialog("Are you sure you want to log out?", isPresented: $showingLogoutConfirmation, titleVisibility: .visible) {
+                Button("Log Out", role: .destructive) {
+                    userManager.signOut()
+                }
+                Button("Cancel", role: .cancel) {
+                    // Cancel action - dialog will dismiss automatically
+                }
+            }
         }
     }
 }
@@ -554,6 +564,7 @@ struct EditProfileView: View {
             )
             .navigationTitle("Edit Profile")
             .navigationBarTitleDisplayMode(.inline)
+            .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") {

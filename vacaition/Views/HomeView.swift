@@ -159,7 +159,7 @@ struct HomeView: View {
             
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 16) {
-                    ForEach(userManager.currentUser?.savedTrips.prefix(3) ?? []) { trip in
+                    ForEach((userManager.currentUser?.savedTrips.sorted(by: { $0.createdAt > $1.createdAt }) ?? []).prefix(3)) { trip in
                         NavigationLink(destination: TripDetailsView(trip: trip)) {
                             CompactTripCard(trip: trip)
                         }

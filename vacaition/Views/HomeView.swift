@@ -14,7 +14,7 @@ struct HomeView: View {
                     welcomeSection
                     
                     // Quick Actions Section
-//                  quickActionsSection
+//                    quickActionsSection
                     
                     // Recent Trips Section
                     if userManager.currentUser?.savedTrips.isEmpty == false {
@@ -55,11 +55,10 @@ struct HomeView: View {
                 .foregroundColor(.primary)
                 .accessibilityAddTraits(.isHeader)
             
-            Text("Your AI-powered travel planning companion")
+            Text("Your personal AI travel planner")
                 .font(.body)
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
-                .accessibilityLabel("Your AI-powered travel planning companion")
         }
     }
     
@@ -77,7 +76,6 @@ struct HomeView: View {
                 .foregroundColor(.secondary)
                 .multilineTextAlignment(.center)
                 .lineLimit(nil)
-                .accessibilityLabel("Where to? Tell me what you’re into, and I’ll handle the rest.")
         }
         .padding(.horizontal, AppTheme.Spacing.md)
     }
@@ -136,7 +134,7 @@ struct HomeView: View {
     private var recentTripsSection: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
-                Text("Saved Trips")
+                Text("Your Trips")
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)
@@ -172,7 +170,7 @@ struct HomeView: View {
     
     private var featuresSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
-            Text("Why Choose Vaication?")
+            Text("Why Travelers Love Vaication")
                 .font(.title3)
                 .fontWeight(.semibold)
                 .foregroundColor(.primary)

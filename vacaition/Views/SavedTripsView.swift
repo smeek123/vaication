@@ -59,7 +59,7 @@ struct SavedTripsView: View {
                     )
                 }
             }
-            .navigationTitle("Saved Trips")
+            .navigationTitle("Your Trips")
             .navigationBarTitleDisplayMode(.inline)
         }
     }

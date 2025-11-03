@@ -161,7 +161,7 @@ struct ProfileView: View {
     private var savedTripsSection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
             HStack {
-                Text("Saved Trips")
+                Text("Your Trips")
                     .font(.title3)
                     .fontWeight(.semibold)
                     .foregroundColor(.primary)

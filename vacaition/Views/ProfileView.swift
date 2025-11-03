@@ -1,4 +1,6 @@
 import SwiftUI
+import StoreKit
+import UIKit
 
 struct ProfileView: View {
     @EnvironmentObject var themeManager: ThemeManager
@@ -337,6 +339,8 @@ struct SettingsView: View {
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userManager: UserManager
     @State private var showingLogoutConfirmation = false
+    @State private var showingRateAppAlert = false
+    @State private var showingFeatureRequest = false
     
     var body: some View {
         NavigationStack {
@@ -371,6 +375,47 @@ struct SettingsView: View {
                     .accessibilityLabel("Done with settings")
                 }
             }
+            .alert("Unable to Rate App", isPresented: $showingRateAppAlert) {
+                Button("Open App Store") {
+                    openAppStore()
+                }
+                Button("Cancel", role: .cancel) { }
+            } message: {
+                Text("The rating prompt is not available at this time. You can rate the app directly in the App Store.")
+            }
+            .sheet(isPresented: $showingFeatureRequest) {
+                FeatureRequestView()
+            }
+        }
+    }
+    
+    private func requestAppReview() {
+        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene {
+            AppStore.requestReview(in: windowScene)
+        } else {
+            // If we can't get the window scene, show an alert
+            showingRateAppAlert = true
+        }
+    }
+    
+    private func openAppStore() {
+        // Try to get the app name for a better search
+        let appName = Bundle.main.infoDictionary?["CFBundleDisplayName"] as? String 
+            ?? Bundle.main.infoDictionary?["CFBundleName"] as? String 
+            ?? "Vacaition"
+        
+        // URL encode the app name for the search
+        let encodedName = appName.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? appName
+        
+        // Open App Store search for the app
+        // Note: In production, replace this with your actual App Store ID URL:
+        // https://apps.apple.com/app/id[YOUR_APP_STORE_ID]
+        let appStoreURL = "https://apps.apple.com/search?term=\(encodedName)"
+        
+        if let url = URL(string: appStoreURL) {
+            UIApplication.shared.open(url)
+        } else if let url = URL(string: "https://apps.apple.com") {
+            UIApplication.shared.open(url)
         }
     }
     
@@ -446,18 +491,42 @@ struct SettingsView: View {
                 Divider()
                     .padding(.leading, 56)
                 
-                SettingsRow(
-                    icon: "star.fill",
-                    title: "Rate App",
-                    subtitle: "Share your feedback"
-                ) {
-                    Image(systemName: "chevron.right")
-                        .font(.caption)
-                        .foregroundColor(.secondary)
+                Button(action: {
+                    requestAppReview()
+                }) {
+                    SettingsRow(
+                        icon: "star.fill",
+                        title: "Rate App",
+                        subtitle: "Share your feedback"
+                    ) {
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel("Rate this app")
                 .accessibilityHint("Tap to rate and review the app")
+                
+                Divider()
+                    .padding(.leading, 56)
+                
+                Button(action: {
+                    showingFeatureRequest = true
+                }) {
+                    SettingsRow(
+                        icon: "lightbulb.fill",
+                        title: "Request Feature",
+                        subtitle: "Suggest new features"
+                    ) {
+                        Image(systemName: "chevron.right")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("Request feature")
+                .accessibilityHint("Tap to suggest a new feature")
                 
                 Divider()
                     .padding(.leading, 56)
@@ -585,6 +654,134 @@ struct EditProfileView: View {
             .onAppear {
                 name = userManager.currentUser?.name ?? ""
                 email = userManager.currentUser?.email ?? ""
+            }
+        }
+    }
+}
+
+struct FeatureRequestView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var themeManager: ThemeManager
+    @EnvironmentObject var userManager: UserManager
+    @State private var featureRequestText = ""
+    @State private var isSubmitting = false
+    @State private var showingSuccessAlert = false
+    @State private var showingErrorAlert = false
+    @State private var errorMessage = ""
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: AppTheme.Spacing.lg) {
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
+                        Text("Share your ideas")
+                            .font(.title2)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                        
+                        Text("We'd love to hear your suggestions for new features. Your feedback helps us make the app better!")
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, AppTheme.Spacing.md)
+                    .padding(.top, AppTheme.Spacing.md)
+                    
+                    VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+                        Text("Feature Request")
+                            .font(.headline)
+                            .foregroundColor(.primary)
+                        
+                        TextEditor(text: $featureRequestText)
+                            .frame(minHeight: 150)
+                            .padding(AppTheme.Spacing.sm)
+                            .background(Color(.systemBackground))
+                            .cornerRadius(AppTheme.CornerRadius.md)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.md)
+                                    .stroke(Color.secondary.opacity(0.3), lineWidth: 1)
+                            )
+                            .accessibilityLabel("Feature request text editor")
+                            .accessibilityHint("Enter your feature request here")
+                    }
+                    .padding(.horizontal, AppTheme.Spacing.md)
+                    
+                    Button(action: {
+                        submitFeatureRequest()
+                    }) {
+                        HStack {
+                            if isSubmitting {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                            } else {
+                                Text("Submit Request")
+                                    .fontWeight(.semibold)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .foregroundColor(.white)
+                        .padding(.vertical, AppTheme.Spacing.md)
+                        .background(featureRequestText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting ? Color.gray : AppTheme.Colors.primary)
+                        .cornerRadius(AppTheme.CornerRadius.md)
+                    }
+                    .disabled(featureRequestText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || isSubmitting)
+                    .padding(.horizontal, AppTheme.Spacing.md)
+                    .accessibilityLabel("Submit feature request")
+                    .accessibilityHint("Submits your feature request")
+                    
+                    Spacer(minLength: AppTheme.Spacing.xl)
+                }
+                .padding(.vertical, AppTheme.Spacing.md)
+            }
+            .background(
+                LiquidGlassBackground()
+                    .ignoresSafeArea()
+            )
+            .navigationTitle("Request Feature")
+            .navigationBarTitleDisplayMode(.inline)
+            .preferredColorScheme(themeManager.isDarkMode ? .dark : .light)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                    .accessibilityLabel("Cancel feature request")
+                }
+            }
+            .alert("Request Submitted", isPresented: $showingSuccessAlert) {
+                Button("OK") {
+                    dismiss()
+                }
+            } message: {
+                Text("Thank you for your feedback! We'll review your feature request.")
+            }
+            .alert("Error", isPresented: $showingErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
+            }
+        }
+    }
+    
+    private func submitFeatureRequest() {
+        let trimmedText = featureRequestText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedText.isEmpty else { return }
+        
+        isSubmitting = true
+        
+        Task {
+            do {
+                try await userManager.authService.submitFeatureRequest(trimmedText)
+                await MainActor.run {
+                    isSubmitting = false
+                    showingSuccessAlert = true
+                }
+            } catch {
+                await MainActor.run {
+                    isSubmitting = false
+                    errorMessage = "Unable to submit your request. Please check your connection and try again."
+                    showingErrorAlert = true
+                }
             }
         }
     }

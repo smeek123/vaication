@@ -193,6 +193,15 @@ class FirebaseAuthService: ObservableObject {
         await updateUser(user)
     }
     
+    func submitFeatureRequest(_ request: String) async throws {
+        let featureRequest: [String: Any] = [
+            "request": request,
+            "createdAt": Timestamp(date: Date())
+        ]
+        
+        try await firestore.collection("featureRequests").addDocument(data: featureRequest)
+    }
+    
     // MARK: - Error Handling
     
     func clearError() {

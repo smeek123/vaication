@@ -4,6 +4,7 @@ import FirebaseFirestore
 struct Trip: Identifiable, Codable, Equatable {
     let id: UUID
     var destination: String
+    var country: String?
     var startDate: Date
     var endDate: Date
     var budget: Double
@@ -13,9 +14,10 @@ struct Trip: Identifiable, Codable, Equatable {
     var createdAt: Date
     var isCompleted: Bool
     
-    init(id: UUID = UUID(), destination: String, startDate: Date, endDate: Date, budget: Double, interests: [Interest] = [], hotels: [Hotel] = [], itinerary: [ItineraryItem] = []) {
+    init(id: UUID = UUID(), destination: String, country: String? = nil, startDate: Date, endDate: Date, budget: Double, interests: [Interest] = [], hotels: [Hotel] = [], itinerary: [ItineraryItem] = []) {
         self.id = id
         self.destination = destination
+        self.country = country
         self.startDate = startDate
         self.endDate = endDate
         self.budget = budget
@@ -128,6 +130,7 @@ extension Trip {
             return nil
         }
         
+        let country = data["country"] as? String
         let isCompleted = data["isCompleted"] as? Bool ?? false
         
         // Parse interests
@@ -199,6 +202,7 @@ extension Trip {
         var trip = Trip(
             id: id,
             destination: destination,
+            country: country,
             startDate: startDateTimestamp.dateValue(),
             endDate: endDateTimestamp.dateValue(),
             budget: budget,

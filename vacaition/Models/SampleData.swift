@@ -141,6 +141,7 @@ struct SampleData {
     static let sampleTrips: [Trip] = [
         Trip(
             destination: "Paris, France",
+            country: "France",
             startDate: Calendar.current.date(byAdding: .day, value: 30, to: Date()) ?? Date(),
             endDate: Calendar.current.date(byAdding: .day, value: 37, to: Date()) ?? Date(),
             budget: 2500,
@@ -150,6 +151,7 @@ struct SampleData {
         ),
         Trip(
             destination: "Tokyo, Japan",
+            country: "Japan",
             startDate: Calendar.current.date(byAdding: .day, value: 45, to: Date()) ?? Date(),
             endDate: Calendar.current.date(byAdding: .day, value: 52, to: Date()) ?? Date(),
             budget: 3200,
@@ -159,6 +161,7 @@ struct SampleData {
         ),
         Trip(
             destination: "Barcelona, Spain",
+            country: "Spain",
             startDate: Calendar.current.date(byAdding: .day, value: 60, to: Date()) ?? Date(),
             endDate: Calendar.current.date(byAdding: .day, value: 67, to: Date()) ?? Date(),
             budget: 1800,

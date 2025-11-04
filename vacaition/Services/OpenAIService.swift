@@ -303,8 +303,12 @@ class OpenAIService: ObservableObject {
         // Create itinerary
         let itinerary = createItineraryFromData(data, startDate: startDate)
         
+        // Extract country from destination
+        let country = extractCountryFromDestination(destination)
+        
         return Trip(
             destination: destination,
+            country: country,
             startDate: startDate,
             endDate: endDate,
             budget: data.budget ?? 2000.0,
@@ -353,6 +357,30 @@ class OpenAIService: ObservableObject {
         }
         
         return itinerary
+    }
+    
+    private func extractCountryFromDestination(_ destination: String) -> String? {
+        // Try to extract country from destination string
+        // Common formats: "City, Country", "City, State, Country", etc.
+        let parts = destination.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+        
+        // If there's a comma, take the last part as country
+        if parts.count > 1, let country = parts.last, !country.isEmpty {
+            return country
+        }
+        
+        // If no comma, try to match against common country names
+        // This is a fallback for destinations like "Iceland" or "New Zealand"
+        let commonCountries = ["France", "Japan", "Spain", "Italy", "Germany", "United Kingdom", "United States", "Canada", "Australia", "New Zealand", "Iceland", "Norway", "Sweden", "Denmark", "Netherlands", "Belgium", "Switzerland", "Austria", "Portugal", "Greece", "Turkey", "Thailand", "India", "China", "South Korea", "Brazil", "Mexico", "Argentina", "Chile", "Peru", "Egypt", "Morocco", "South Africa"]
+        
+        let destinationLower = destination.lowercased()
+        for country in commonCountries {
+            if destinationLower.contains(country.lowercased()) {
+                return country
+            }
+        }
+        
+        return nil
     }
     
     private func getIconForInterest(_ interest: String) -> String {

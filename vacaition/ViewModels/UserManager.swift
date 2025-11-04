@@ -37,6 +37,12 @@ class UserManager: ObservableObject {
         }
     }
     
+    func deleteTrip(_ trip: Trip) {
+        Task {
+            await firebaseAuthService.deleteTrip(trip)
+        }
+    }
+    
     func updateUserPreferences(_ preferences: UserPreferences) {
         Task {
             await firebaseAuthService.updateUserPreferences(preferences)

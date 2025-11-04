@@ -31,7 +31,7 @@ extension User {
             "email": email,
             "createdAt": Timestamp(date: createdAt),
             "savedTrips": savedTrips.map { trip in
-                [
+                var tripData: [String: Any] = [
                     "id": trip.id.uuidString,
                     "destination": trip.destination,
                     "startDate": Timestamp(date: trip.startDate),
@@ -70,6 +70,12 @@ extension User {
                     "createdAt": Timestamp(date: trip.createdAt),
                     "isCompleted": trip.isCompleted
                 ]
+                
+                if let country = trip.country {
+                    tripData["country"] = country
+                }
+                
+                return tripData
             },
             "preferences": [
                 "isDarkMode": preferences.isDarkMode,

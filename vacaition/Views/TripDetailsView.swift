@@ -4,10 +4,14 @@ struct TripDetailsView: View {
     let trip: Trip
     @EnvironmentObject var themeManager: ThemeManager
     @EnvironmentObject var userManager: UserManager
+    @Environment(\.dismiss) private var dismiss
     @State private var showingEditSheet = false
     @State private var showingItineraryDetail = false
     @State private var selectedItineraryItem: ItineraryItem?
     @State private var isTripSaved = false
+    @State private var showingDeleteConfirmation = false
+    @State private var isDeleting = false
+    @State private var showingDeleteError = false
     
     var body: some View {
         NavigationStack {
@@ -67,12 +71,14 @@ struct TripDetailsView: View {
                         }
                         .accessibilityLabel("Export itinerary")
                         
-                        Divider()
-                        
-                        Button("Delete Trip", role: .destructive) {
-                            // Delete functionality
+                        if isTripSaved {
+                            Divider()
+                            
+                            Button("Delete Trip", role: .destructive) {
+                                showingDeleteConfirmation = true
+                            }
+                            .accessibilityLabel("Delete this trip")
                         }
-                        .accessibilityLabel("Delete this trip")
                     } label: {
                         Image(systemName: "ellipsis.circle")
                             .accessibilityLabel("Trip options menu")
@@ -90,6 +96,22 @@ struct TripDetailsView: View {
         }
         .onAppear {
             checkIfTripIsSaved()
+        }
+        .confirmationDialog("Delete Trip", isPresented: $showingDeleteConfirmation, titleVisibility: .visible) {
+            Button("Delete", role: .destructive) {
+                deleteTrip()
+            }
+            Button("Cancel", role: .cancel) { }
+        } message: {
+            Text("Are you sure you want to delete \"\(trip.destination)\"? This action cannot be undone.")
+        }
+        .alert("Error", isPresented: $showingDeleteError) {
+            Button("OK") {
+                userManager.clearError()
+                isDeleting = false
+            }
+        } message: {
+            Text(userManager.errorMessage ?? "Unable to delete trip. Please try again.")
         }
     }
     
@@ -279,6 +301,38 @@ struct TripDetailsView: View {
     private func saveTrip() {
         userManager.addTrip(trip)
         isTripSaved = true
+    }
+    
+    private func deleteTrip() {
+        guard isTripSaved else { return }
+        
+        isDeleting = true
+        userManager.deleteTrip(trip)
+        
+        // Monitor for deletion completion
+        Task {
+            // Wait a moment for the deletion to complete
+            try? await Task.sleep(nanoseconds: 500_000_000) // 0.5 seconds
+            
+            await MainActor.run {
+                isDeleting = false
+                
+                // Check if there was an error
+                if let error = userManager.errorMessage {
+                    showingDeleteError = true
+                } else {
+                    // Verify trip was actually removed
+                    let stillSaved = userManager.currentUser?.savedTrips.contains { $0.id == trip.id } ?? false
+                    if !stillSaved {
+                        // Success - dismiss the view
+                        dismiss()
+                    } else {
+                        // Trip still exists, might be an error
+                        showingDeleteError = true
+                    }
+                }
+            }
+        }
     }
 }
 

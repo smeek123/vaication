@@ -187,6 +187,12 @@ class FirebaseAuthService: ObservableObject {
         await updateUser(user)
     }
     
+    func deleteTrip(_ trip: Trip) async {
+        guard var user = currentUser else { return }
+        user.savedTrips.removeAll { $0.id == trip.id }
+        await updateUser(user)
+    }
+    
     func updateUserPreferences(_ preferences: UserPreferences) async {
         guard var user = currentUser else { return }
         user.preferences = preferences

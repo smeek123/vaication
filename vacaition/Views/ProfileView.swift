@@ -138,11 +138,15 @@ struct ProfileView: View {
 
     private var uniqueCountryCount: Int {
         guard let trips = userManager.currentUser?.savedTrips else { return 0 }
-        let countries: [String] = trips.map { trip in
-            // Heuristic: if destination contains a comma, take the last token as country
+        let countries: [String] = trips.compactMap { trip in
+            // Use country field if available, otherwise fall back to heuristic parsing
+            if let country = trip.country, !country.isEmpty {
+                return country
+            }
+            // Fallback: if destination contains a comma, take the last token as country
             let parts = trip.destination.split(separator: ",").map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             if let last = parts.last, parts.count > 1 {
-                return last
+                return String(last)
             } else {
                 return trip.destination
             }
@@ -601,6 +605,17 @@ struct EditProfileView: View {
     @EnvironmentObject var userManager: UserManager
     @State private var name = ""
     @State private var email = ""
+    @State private var isSaving = false
+    @State private var showingErrorAlert = false
+    @State private var errorMessage = ""
+    @State private var hasChanges = false
+    
+    private var isSaveDisabled: Bool {
+        name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        isSaving ||
+        !hasChanges
+    }
     
     var body: some View {
         NavigationStack {
@@ -612,6 +627,9 @@ struct EditProfileView: View {
                         TextField("Enter your name", text: $name)
                             .multilineTextAlignment(.trailing)
                             .accessibilityLabel("Name field")
+                            .onChange(of: name) { _, _ in
+                                checkForChanges()
+                            }
                     }
                     
                     HStack {
@@ -620,10 +638,23 @@ struct EditProfileView: View {
                         TextField("Enter your email", text: $email)
                             .multilineTextAlignment(.trailing)
                             .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
                             .accessibilityLabel("Email field")
+                            .onChange(of: email) { _, _ in
+                                checkForChanges()
+                            }
                     }
                 } header: {
                     Text("Profile Information")
+                } footer: {
+                    if isSaving {
+                        HStack {
+                            Spacer()
+                            ProgressView()
+                                .padding(.top, 8)
+                            Spacer()
+                        }
+                    }
                 }
             }
             .scrollContentBackground(.hidden)
@@ -639,22 +670,87 @@ struct EditProfileView: View {
                     Button("Cancel") {
                         dismiss()
                     }
+                    .disabled(isSaving)
                     .accessibilityLabel("Cancel editing profile")
                 }
                 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        // Save profile changes
-                        dismiss()
+                        saveProfile()
                     }
                     .fontWeight(.semibold)
+                    .disabled(isSaveDisabled)
                     .accessibilityLabel("Save profile changes")
                 }
             }
             .onAppear {
                 name = userManager.currentUser?.name ?? ""
                 email = userManager.currentUser?.email ?? ""
+                checkForChanges()
             }
+            .alert("Error", isPresented: $showingErrorAlert) {
+                Button("OK", role: .cancel) { }
+            } message: {
+                Text(errorMessage)
+            }
+        }
+    }
+    
+    private func checkForChanges() {
+        let originalName = userManager.currentUser?.name ?? ""
+        let originalEmail = userManager.currentUser?.email ?? ""
+        hasChanges = name != originalName || email != originalEmail
+    }
+    
+    private func saveProfile() {
+        guard var currentUser = userManager.currentUser else {
+            errorMessage = "Unable to save. Please try again."
+            showingErrorAlert = true
+            return
+        }
+        
+        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        // Validate inputs
+        guard !trimmedName.isEmpty else {
+            errorMessage = "Name cannot be empty."
+            showingErrorAlert = true
+            return
+        }
+        
+        guard !trimmedEmail.isEmpty else {
+            errorMessage = "Email cannot be empty."
+            showingErrorAlert = true
+            return
+        }
+        
+        // Basic email validation
+        guard trimmedEmail.contains("@") && trimmedEmail.contains(".") else {
+            errorMessage = "Please enter a valid email address."
+            showingErrorAlert = true
+            return
+        }
+        
+        isSaving = true
+        
+        // Update user object
+        currentUser.name = trimmedName
+        currentUser.email = trimmedEmail
+        
+        // Save to Firestore
+        userManager.updateUser(currentUser)
+        
+        isSaving = false
+        
+        // Check if there was an error
+        if let error = userManager.errorMessage {
+            errorMessage = error
+            showingErrorAlert = true
+        } else {
+            // Success - dismiss the view
+            // The UI will update automatically through the published currentUser property
+            dismiss()
         }
     }
 }

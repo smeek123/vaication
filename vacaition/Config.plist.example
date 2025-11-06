@@ -2,18 +2,21 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>OpenAI_API_Key</key>
-    <string>your-openai-api-key-here</string>
-    <key>OpenAI_Model</key>
-    <string>gpt-3.5-turbo</string>
-    <key>OpenAI_Max_Tokens</key>
-    <integer>1000</integer>
-    <key>OpenAI_Temperature</key>
-    <real>0.7</real>
+    <!-- API Base URL for Firebase Functions backend -->
+    <!-- This is safe to expose - security comes from Firebase Auth tokens -->
+    <!-- Replace with your actual Firebase Functions URL after deployment -->
+    <key>API_Base_URL</key>
+    <string>https://your-project-id.cloudfunctions.net</string>
+    
+    <!-- Optional: Timeout and retry settings -->
     <key>API_Timeout</key>
     <integer>30</integer>
     <key>Max_Retry_Attempts</key>
     <integer>3</integer>
+    
+    <!-- NOTE: API keys (OpenAI, Amadeus, Google Places) are now stored -->
+    <!-- on the backend in Firebase Functions environment variables. -->
+    <!-- Never put API keys in this file or in client code! -->
 </dict>
 </plist>
 

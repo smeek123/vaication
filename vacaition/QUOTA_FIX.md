@@ -1,59 +1,62 @@
 # OpenAI API Quota Issue - Quick Fix Guide
 
-## The Problem
-Your app is showing "error connecting to the ChatGPT API" because your OpenAI account has exceeded its quota/credits.
+## Current Architecture (Backend API)
 
-## The Solution
-You need to add credits to your OpenAI account:
+**Note:** The app now uses a backend API for OpenAI calls. If you're seeing quota errors, the issue is with the backend configuration.
 
-### Step 1: Go to OpenAI Billing
-1. Visit: https://platform.openai.com/account/billing
+## If You See Quota Errors
+
+### Option 1: Add Credits to OpenAI Account (Recommended)
+
+1. Go to [OpenAI Billing](https://platform.openai.com/account/billing)
 2. Log in with your OpenAI account
+3. Add payment method and credits
+4. The backend will automatically use the updated account
 
-### Step 2: Add Credits
-1. Click "Add to credit balance" or "Add payment method"
-2. Add a payment method (credit card)
-3. Add at least $5-10 in credits to get started
+### Option 2: Update Backend API Key
 
-### Step 3: Verify Usage Limits
-1. Check your usage limits in the billing section
-2. Make sure you have sufficient credits for API calls
+If you have another OpenAI account with credits:
 
-## Cost Information
-- **GPT-3.5-turbo**: ~$0.002 per 1K tokens (very cheap)
-- **GPT-4**: ~$0.03 per 1K tokens (more expensive)
-- A typical conversation costs only a few cents
+1. **Update Firebase Functions environment variable:**
+   ```bash
+   firebase functions:config:set openai.api_key="sk-your-new-api-key-here"
+   ```
 
-## Alternative Solutions
+2. **Redeploy functions:**
+   ```bash
+   firebase deploy --only functions
+   ```
 
-### Option 1: Use a Different API Key
-If you have another OpenAI account with credits, update the API key in `Config.plist`:
+### Option 3: Check Backend Logs
 
-```xml
-<key>OpenAI_API_Key</key>
-<string>sk-your-new-api-key-here</string>
-```
-
-### Option 2: Use Environment Variable
-Set the API key as an environment variable:
-
+Check Firebase Functions logs for detailed error messages:
 ```bash
-export OPENAI_API_KEY="sk-your-new-api-key-here"
+firebase functions:log
 ```
 
-### Option 3: Test with Mock Responses
-For development/testing, you can temporarily disable the API calls and use mock responses.
+## Important Notes
 
-## What I Fixed
-1. ✅ Added better error handling for quota exceeded errors
-2. ✅ Improved error messages to be more user-friendly
-3. ✅ Added specific guidance for quota issues
+- ⚠️ **Never** put API keys in client code (`Config.plist`)
+- ✅ All API keys should be in Firebase Functions environment variables
+- ✅ The client app doesn't need direct access to OpenAI API keys
 
-## Next Steps
-1. Add credits to your OpenAI account
-2. Test the chat functionality
-3. The app will now show a helpful error message if quota is exceeded again
+## Troubleshooting
 
-## Need Help?
+1. **Verify backend is deployed:**
+   - Check Firebase Console → Functions
+   - Ensure the `api` function is deployed
+
+2. **Check API key is set:**
+   ```bash
+   firebase functions:config:get
+   ```
+
+3. **Verify OpenAI account:**
+   - Check billing at https://platform.openai.com/account/billing
+   - Ensure account has credits/quota available
+
+## Getting Help
+
+- Firebase Functions Docs: https://firebase.google.com/docs/functions
 - OpenAI Support: https://help.openai.com/
-- OpenAI Community: https://community.openai.com/
+- See `SECURITY.md` for security best practices

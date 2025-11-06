@@ -872,7 +872,7 @@ struct FeatureRequestView: View {
                     isSubmitting = false
                     showingSuccessAlert = true
                 }
-            } catch {
+            } catch _ {
                 await MainActor.run {
                     isSubmitting = false
                     errorMessage = "Unable to submit your request. Please check your connection and try again."

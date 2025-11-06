@@ -318,7 +318,7 @@ struct TripDetailsView: View {
                 isDeleting = false
                 
                 // Check if there was an error
-                if let error = userManager.errorMessage {
+                if userManager.errorMessage != nil {
                     showingDeleteError = true
                 } else {
                     // Verify trip was actually removed

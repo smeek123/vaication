@@ -10,7 +10,11 @@ class ChatViewModel: ObservableObject {
     @Published var isLoading = false
     
     private var cancellables = Set<AnyCancellable>()
-    private let openAIService = OpenAIService.shared
+    private let aiChatService = AIChatService.shared
+    
+    // User context for personalization
+    var userPreferences: UserPreferences?
+    var savedTrips: [Trip] = []
     
     init() {
         loadInitialMessages()
@@ -28,7 +32,7 @@ class ChatViewModel: ObservableObject {
         // Simulate AI typing
         simulateAITyping()
         
-        // Generate AI response using OpenAI service
+        // Generate AI response using backend API (AIChatService)
         Task {
             await generateAIResponse(for: inputText)
         }
@@ -63,7 +67,15 @@ class ChatViewModel: ObservableObject {
     
     private func generateAIResponse(for userInput: String) async {
         do {
-            let response = try await openAIService.sendMessage(userInput, conversationHistory: messages)
+            // Limit conversation history to last 20 messages for context
+            let recentHistory = Array(messages.suffix(20))
+            
+            let response = try await aiChatService.sendMessage(
+                userInput,
+                conversationHistory: recentHistory,
+                userPreferences: userPreferences,
+                savedTrips: savedTrips
+            )
             
             DispatchQueue.main.async {
                 // Remove typing indicator if it exists
@@ -101,16 +113,16 @@ class ChatViewModel: ObservableObject {
                 
                 // Show specific error message based on error type
                 let errorContent: String
-                if let openAIError = error as? OpenAIError {
-                    switch openAIError {
-                    case .quotaExceeded:
-                        errorContent = "🦉 Oops! It looks like my API quota has been exceeded. Please check your OpenAI account billing and add credits to continue our conversation. You can do this at https://platform.openai.com/account/billing"
-                    case .invalidAPIKey:
-                        errorContent = "🔑 There's an issue with the API configuration. Please check that your OpenAI API key is properly set up."
+                if let apiError = error as? APIError {
+                    switch apiError {
+                    case .unauthorized:
+                        errorContent = "🔑 Authentication failed. Please sign in again."
                     case .rateLimitExceeded:
                         errorContent = "⏰ I'm getting too many requests right now. Please wait a moment and try again!"
                     case .networkError:
                         errorContent = "🌐 I'm having trouble connecting to the internet. Please check your connection and try again."
+                    case .serverError:
+                        errorContent = "🦉 The server is having issues right now. Please try again in a moment!"
                     default:
                         errorContent = "🤔 Something went wrong on my end. Please try again in a moment!"
                     }

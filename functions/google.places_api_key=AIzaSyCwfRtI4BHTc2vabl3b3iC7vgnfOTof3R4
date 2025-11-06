@@ -1,0 +1,2 @@
+npx firebase functions:config:get
+.

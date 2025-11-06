@@ -1,0 +1,148 @@
+==========================================
+NEXT STEPS - Getting Your AI Travel Agent Running
+==========================================
+
+All the code is complete! Here's what you need to do:
+
+STEP 1: Install Firebase CLI
+-----------------------------
+npm install -g firebase-tools
+
+Verify: firebase --version
+
+STEP 2: Login to Firebase
+--------------------------
+firebase login
+
+STEP 3: Initialize Firebase Functions (if not done)
+----------------------------------------------------
+cd /Users/seanmeek/Desktop/vacaition
+firebase init functions
+
+When prompted:
+- Select existing project or create new
+- Language: TypeScript
+- ESLint: Yes (optional)
+- Install dependencies: Yes
+
+STEP 4: Install Backend Dependencies
+-------------------------------------
+cd functions
+npm install
+
+STEP 5: Get Your API Keys
+--------------------------
+You need keys for 3 services:
+
+A. OpenAI API Key:
+   - Go to https://platform.openai.com/api-keys
+   - Create account and get API key
+   - Copy it immediately!
+
+B. Amadeus (Flights & Hotels):
+   - Go to https://developers.amadeus.com/get-started
+   - Sign up for free account
+   - Create app and get Client ID & Secret
+   - Free tier: 2000 calls/month
+
+C. Google Places API (Activities):
+   - Go to https://console.cloud.google.com/
+   - Enable "Places API"
+   - Create API key
+
+STEP 6: Configure API Keys in Firebase
+---------------------------------------
+cd /Users/seanmeek/Desktop/vacaition/functions
+
+firebase functions:config:set \
+  openai.api_key="sk-your-openai-key-here" \
+  amadeus.client_id="your-amadeus-client-id" \
+  amadeus.client_secret="your-amadeus-client-secret" \
+  google.places_api_key="your-google-places-key"
+
+Replace the placeholder values with your actual keys!
+
+Verify: firebase functions:config:get
+
+STEP 7: Build and Deploy Backend
+---------------------------------
+npm run build
+firebase deploy --only functions
+
+When it completes, you'll see:
+Function URL: https://us-central1-your-project-id.cloudfunctions.net/api
+
+COPY THIS URL - you'll need it next!
+
+STEP 8: Update Client App Configuration
+---------------------------------------
+1. Open vacaition/Config.plist in Xcode
+2. Find API_Base_URL key
+3. Replace with your Firebase Functions URL:
+
+   <key>API_Base_URL</key>
+   <string>https://us-central1-your-project-id.cloudfunctions.net</string>
+
+   (Use the URL from Step 7, but WITHOUT /api at the end)
+
+STEP 9: Test
+-------------
+Test health endpoint:
+curl https://us-central1-your-project-id.cloudfunctions.net/api/health
+
+Should return: {"status":"ok","timestamp":"..."}
+
+Then test in your app:
+1. Build and run in Xcode
+2. Go to Chat view
+3. Send message: "I want to plan a trip to Paris"
+4. Luna should respond!
+
+TROUBLESHOOTING
+---------------
+"OPENAI_API_KEY not configured":
+  - Run: firebase functions:config:set openai.api_key="your-key"
+  - Redeploy: firebase deploy --only functions
+
+"Unauthorized" error:
+  - Make sure you're signed in (Firebase Auth)
+  - Check API Base URL in Config.plist
+
+Backend 500 error:
+  - Check logs: firebase functions:log
+  - Verify all API keys are set correctly
+
+Can't connect:
+  - Verify API Base URL matches deployed function URL
+  - Check: firebase functions:list
+
+SECURITY REMINDERS
+------------------
+✅ DO:
+  - Keep API keys in Firebase Functions config only
+  - Use Firebase Auth tokens
+  - Monitor API usage
+
+❌ DON'T:
+  - Put API keys in Config.plist or client code
+  - Commit API keys to git
+  - Share API keys publicly
+
+CHECKLIST
+---------
+[ ] Firebase CLI installed
+[ ] Logged in to Firebase
+[ ] Functions initialized
+[ ] Dependencies installed
+[ ] OpenAI API key obtained
+[ ] Amadeus credentials obtained
+[ ] Google Places API key obtained
+[ ] API keys configured in Firebase
+[ ] Backend deployed
+[ ] Function URL copied
+[ ] Config.plist updated
+[ ] Health endpoint tested
+[ ] App tested end-to-end
+
+For detailed instructions, see: NEXT_STEPS.md (in project root)
+

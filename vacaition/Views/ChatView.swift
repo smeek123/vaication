@@ -30,6 +30,7 @@ struct ChatView: View {
             .navigationBarTitleDisplayMode(.inline)
             .onAppear {
                 checkIfTripIsSaved()
+                loadUserContext()
             }
             .onChange(of: chatViewModel.currentTrip) {
                 checkIfTripIsSaved()
@@ -217,6 +218,13 @@ struct ChatView: View {
         guard let trip = chatViewModel.currentTrip else { return }
         userManager.addTrip(trip)
         isTripSaved = true
+    }
+    
+    private func loadUserContext() {
+        if let user = userManager.currentUser {
+            chatViewModel.userPreferences = user.preferences
+            chatViewModel.savedTrips = user.savedTrips
+        }
     }
 }
 

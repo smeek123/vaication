@@ -68,6 +68,11 @@ struct ParsedTripData: Codable {
 }
 
 // MARK: - OpenAI Service
+// ⚠️ DEPRECATED: This service is no longer used.
+// All OpenAI API calls now go through the backend (AIChatService -> Firebase Functions).
+// This file is kept for reference but should not be used in production.
+// API keys are now stored securely on the backend only.
+@available(*, deprecated, message: "Use AIChatService instead. API keys should never be in client code.")
 class OpenAIService: ObservableObject {
     static let shared = OpenAIService()
     
@@ -131,20 +136,28 @@ class OpenAIService: ObservableObject {
     }
     
     private static func getAPIKey() -> String {
-        // Try to get from environment variable first
+        // ⚠️ SECURITY WARNING: This method is deprecated.
+        // API keys should NEVER be in client code.
+        // All API calls should go through the backend (AIChatService).
+        
+        // Try to get from environment variable first (for development only)
         if let envKey = ProcessInfo.processInfo.environment["OPENAI_API_KEY"] {
+            print("⚠️ WARNING: Using OpenAI API key from environment. This should only be for development.")
             return envKey
         }
         
-        // Try to get from configuration file
+        // Try to get from configuration file (DEPRECATED - should not be used)
         if let path = Bundle.main.path(forResource: "Config", ofType: "plist"),
            let config = NSDictionary(contentsOfFile: path),
            let apiKey = config["OpenAI_API_Key"] as? String {
+            print("⚠️ WARNING: OpenAI API key found in Config.plist. This is a security risk!")
+            print("⚠️ Please remove the API key from Config.plist and use AIChatService instead.")
             return apiKey
         }
         
-        // Fallback to a placeholder (this should be replaced with actual key)
-        return "your-openai-api-key-here"
+        // Fallback - this service should not be used
+        print("⚠️ ERROR: OpenAIService is deprecated. Use AIChatService instead.")
+        return "DEPRECATED_USE_AICHATSERVICE"
     }
     
     func sendMessage(_ userMessage: String, conversationHistory: [Message] = []) async throws -> AIResponse {

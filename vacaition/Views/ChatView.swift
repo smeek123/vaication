@@ -6,7 +6,7 @@ struct ChatView: View {
     @EnvironmentObject var userManager: UserManager
     @FocusState private var isTextFieldFocused: Bool
     @State private var isTripSaved = false
-    @State private var showingTripDetails = false
+    @State private var selectedTrip: Trip?
     
     var body: some View {
         NavigationStack {
@@ -45,9 +45,9 @@ struct ChatView: View {
                             .accessibilityLabel("Save current trip")
                         }
                         
-                        if let _ = chatViewModel.currentTrip {
+                        if let currentTrip = chatViewModel.currentTrip {
                             Button("View Trip Details") {
-                                showingTripDetails = true
+                                selectedTrip = currentTrip
                             }
                             .accessibilityLabel("View current trip details")
                         }
@@ -88,10 +88,8 @@ struct ChatView: View {
                     }
                 }
             }
-            .navigationDestination(isPresented: $showingTripDetails) {
-                if let trip = chatViewModel.currentTrip {
-                    TripDetailsView(trip: trip)
-                }
+            .navigationDestination(item: $selectedTrip) { trip in
+                TripDetailsView(trip: trip)
             }
         }
     }
@@ -101,7 +99,9 @@ struct ChatView: View {
             ScrollView {
                 LazyVStack(spacing: AppTheme.Spacing.md) {
                     ForEach(chatViewModel.messages) { message in
-                        ChatBubble(message: message)
+                        ChatBubble(message: message) { trip in
+                            selectedTrip = trip
+                        }
                             .id(message.id)
                     }
                     
@@ -230,6 +230,7 @@ struct ChatView: View {
 
 struct ChatBubble: View {
     let message: Message
+    var onTripSelected: (Trip) -> Void = { _ in }
     @EnvironmentObject var themeManager: ThemeManager
     
     var body: some View {
@@ -276,26 +277,38 @@ struct ChatBubble: View {
                             .frame(width: 32, height: 32)
                             .accessibilityHidden(true)
                         
-                        Text(message.content)
-                            .font(.body)
-                            .foregroundColor(.primary)
-                            .padding(.horizontal, AppTheme.Spacing.md)
-                            .padding(.vertical, AppTheme.Spacing.sm)
-                            .background(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.lg)
-                            .fill(.ultraThinMaterial)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: AppTheme.CornerRadius.lg)
-                                .stroke(
-                                    LinearGradient(
-                                        colors: [
-                                            AppTheme.Colors.secondary.opacity(0.22),
-                                            AppTheme.Colors.secondary.opacity(0.08)
-                                        ],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    ), lineWidth: 1
+                        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+                            if !message.content.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                Text(message.content)
+                                    .font(.body)
+                                    .foregroundColor(.primary)
+                            }
+                            
+                            if let trip = message.tripSuggestion {
+                                ChatTripCard(trip: trip) {
+                                    onTripSelected(trip)
+                                }
+                            }
+                        }
+                        .padding(.horizontal, AppTheme.Spacing.md)
+                        .padding(.vertical, AppTheme.Spacing.sm)
+                        .background(
+                            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.lg)
+                                .fill(.ultraThinMaterial)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.lg)
+                                        .stroke(
+                                            LinearGradient(
+                                                colors: [
+                                                    AppTheme.Colors.secondary.opacity(0.22),
+                                                    AppTheme.Colors.secondary.opacity(0.08)
+                                                ],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            ), lineWidth: 1
+                                        )
                                 )
-                            ))
+                        )
                     }
                     
                     Text(formatTime(message.timestamp))
@@ -382,6 +395,83 @@ struct TypingIndicator: View {
             animating = true
         }
         .accessibilityLabel("Luna is typing")
+    }
+}
+
+struct ChatTripCard: View {
+    let trip: Trip
+    let onSelect: () -> Void
+    
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .short
+        return formatter
+    }()
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: AppTheme.Spacing.sm) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                    Text(trip.destination)
+                        .font(.headline)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.primary)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.leading)
+                    
+                    Text(dateRange)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                
+                Spacer()
+                
+                Circle()
+                    .fill(trip.isCompleted ? AppTheme.Colors.success : AppTheme.Colors.primary)
+                    .frame(width: 10, height: 10)
+                    .accessibilityHidden(true)
+            }
+            
+            Label("$\(Int(trip.budget)) budget", systemImage: "dollarsign.circle.fill")
+                .font(.footnote)
+                .foregroundColor(AppTheme.Colors.primary)
+            
+            Divider()
+                .opacity(0.15)
+            
+            Button(action: onSelect) {
+                HStack(spacing: AppTheme.Spacing.xs) {
+                    Text("View Trip")
+                        .font(.footnote)
+                        .fontWeight(.semibold)
+                    Image(systemName: "arrow.up.right")
+                        .font(.caption)
+                }
+            }
+            .buttonStyle(.plain)
+            .foregroundColor(AppTheme.Colors.primary)
+        }
+        .padding(AppTheme.Spacing.md)
+        .background(
+            RoundedRectangle(cornerRadius: AppTheme.CornerRadius.md)
+                .fill(AppTheme.Colors.cardBackground.opacity(0.95))
+                .overlay(
+                    RoundedRectangle(cornerRadius: AppTheme.CornerRadius.md)
+                        .stroke(AppTheme.Colors.secondary.opacity(0.18), lineWidth: 1)
+                )
+        )
+        .contentShape(RoundedRectangle(cornerRadius: AppTheme.CornerRadius.md))
+        .onTapGesture {
+            onSelect()
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityHint("Opens trip details")
+    }
+    
+    private var dateRange: String {
+        let start = ChatTripCard.dateFormatter.string(from: trip.startDate)
+        let end = ChatTripCard.dateFormatter.string(from: trip.endDate)
+        return "\(start) - \(end)"
     }
 }
 

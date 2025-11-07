@@ -183,18 +183,55 @@ class AIChatService {
             QuickReply(title: reply.title, action: reply.action)
         }
         
+        let cleanedText = cleanAIResponseText(response.response)
+        let summarizedText: String
+        if let _ = tripSuggestion, cleanedText.count > 400 {
+            summarizedText = "I've mapped out a full itinerary for you. View the trip details page for the complete plan!"
+        } else {
+            summarizedText = cleanedText
+        }
+        let finalText: String
+        if summarizedText.isEmpty, tripSuggestion != nil {
+            finalText = "I put together a tailored trip plan for you. View the trip details page for the full itinerary!"
+        } else {
+            finalText = summarizedText
+        }
+        
         return AIResponse(
-            text: response.response,
+            text: finalText,
             tripSuggestion: tripSuggestion,
             quickReplies: quickReplies
         )
     }
+
+    private func cleanAIResponseText(_ text: String) -> String {
+        let pattern = #"TRIP_DATA_START[\s\S]*?TRIP_DATA_END"#
+        let range = NSRange(text.startIndex..<text.endIndex, in: text)
+        let stripped: String
+        if let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) {
+            stripped = regex.stringByReplacingMatches(in: text, options: [], range: range, withTemplate: "")
+        } else {
+            stripped = text
+        }
+        let collapsedWhitespace = stripped.replacingOccurrences(of: "\n{3,}", with: "\n\n", options: .regularExpression)
+        return collapsedWhitespace.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
     
     private func convertToTrip(_ tripData: TripSuggestionResponse) throws -> Trip {
-        let dateFormatter = ISO8601DateFormatter()
+        let isoFormatter = ISO8601DateFormatter()
+        isoFormatter.formatOptions = [.withFullDate]
         
-        guard let startDate = dateFormatter.date(from: tripData.startDate),
-              let endDate = dateFormatter.date(from: tripData.endDate) else {
+        let fallbackFormatter = DateFormatter()
+        fallbackFormatter.calendar = Calendar(identifier: .iso8601)
+        fallbackFormatter.locale = Locale(identifier: "en_US_POSIX")
+        fallbackFormatter.dateFormat = "yyyy-MM-dd"
+        
+        func parseDate(_ value: String) -> Date? {
+            isoFormatter.date(from: value) ?? fallbackFormatter.date(from: value)
+        }
+        
+        guard let startDate = parseDate(tripData.startDate),
+              let endDate = parseDate(tripData.endDate) else {
             throw APIError.decodingError(NSError(domain: "AIChatService", code: -1, userInfo: [NSLocalizedDescriptionKey: "Invalid date format"]))
         }
         
@@ -214,7 +251,7 @@ class AIChatService {
         }
         
         let itinerary = tripData.itinerary.map { item in
-            let itemDate = dateFormatter.date(from: item.date) ?? startDate
+            let itemDate = parseDate(item.date) ?? startDate
             let category = ActivityCategory(rawValue: item.category) ?? .sightseeing
             
             return ItineraryItem(

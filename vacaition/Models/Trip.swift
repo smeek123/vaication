@@ -1,7 +1,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct Trip: Identifiable, Codable, Equatable {
+struct Trip: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var destination: String
     var country: String?
@@ -29,7 +29,7 @@ struct Trip: Identifiable, Codable, Equatable {
     }
 }
 
-struct Interest: Identifiable, Codable, Equatable {
+struct Interest: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var name: String
     var icon: String
@@ -41,7 +41,7 @@ struct Interest: Identifiable, Codable, Equatable {
     }
 }
 
-struct Hotel: Identifiable, Codable, Equatable {
+struct Hotel: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var name: String
     var address: String
@@ -61,7 +61,7 @@ struct Hotel: Identifiable, Codable, Equatable {
     }
 }
 
-struct ItineraryItem: Identifiable, Codable, Equatable {
+struct ItineraryItem: Identifiable, Codable, Equatable, Hashable {
     let id: UUID
     var title: String
     var description: String

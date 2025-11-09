@@ -64,6 +64,7 @@ extension User {
                             "time": item.time,
                             "location": item.location,
                             "cost": item.cost ?? 0.0,
+                            "costDetails": item.costDetails ?? "",
                             "category": item.category.rawValue
                         ]
                     },

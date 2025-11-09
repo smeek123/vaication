@@ -29,7 +29,7 @@ struct TripDetailsView: View {
                     // Hotels Section
                     hotelsSection
                     
-                    // Itinerary Section
+                    // Activity Ideas
                     itinerarySection
                     
                     // Action Buttons
@@ -174,16 +174,9 @@ struct TripDetailsView: View {
     private var itinerarySection: some View {
         VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
             HStack {
-                SectionHeader(title: "Itinerary", icon: "calendar.badge.clock")
+                SectionHeader(title: "Suggested Activities", icon: "sparkles")
                 
                 Spacer()
-                
-                Button("View All") {
-                    // Navigate to full itinerary
-                }
-                .font(.body)
-                .foregroundColor(AppTheme.Colors.primary)
-                .accessibilityLabel("View complete itinerary")
             }
             
             VStack(spacing: AppTheme.Spacing.sm) {
@@ -199,7 +192,7 @@ struct TripDetailsView: View {
                         // Show more items
                     }) {
                         HStack {
-                            Text("Show \(trip.itinerary.count - 3) more activities")
+                            Text("See \(trip.itinerary.count - 3) more ideas")
                                 .font(.body)
                                 .fontWeight(.medium)
                             
@@ -213,7 +206,7 @@ struct TripDetailsView: View {
                         .background(AppTheme.Colors.primary.opacity(0.1))
                         .cornerRadius(AppTheme.CornerRadius.md)
                     }
-                    .accessibilityLabel("Show \(trip.itinerary.count - 3) more activities")
+                    .accessibilityLabel("See \(trip.itinerary.count - 3) more activity ideas")
                 }
             }
         }
@@ -486,25 +479,43 @@ struct ItineraryItemRow: View {
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
                         .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     
                     Text(item.description)
                         .font(.body)
                         .foregroundColor(.secondary)
-                        .lineLimit(2)
+                        .lineLimit(3)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .multilineTextAlignment(.leading)
                     
-                    HStack {
-                        Text(item.time)
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                        
-                        Spacer()
-                        
-                        if let cost = item.cost {
-                            Text("$\(Int(cost))")
+                    if !item.location.isEmpty {
+                        HStack(spacing: AppTheme.Spacing.xs) {
+                            Image(systemName: "mappin.and.ellipse")
                                 .font(.caption)
-                                .fontWeight(.semibold)
                                 .foregroundColor(AppTheme.Colors.primary)
+                            Text(item.location)
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                    }
+                    
+                    if let cost = item.cost {
+                        Text("Approx. $\(Int(cost)) per person")
+                            .font(.caption)
+                            .fontWeight(.semibold)
+                            .foregroundColor(AppTheme.Colors.primary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                    
+                    if let costDetails = item.costDetails, !costDetails.isEmpty {
+                        Text(costDetails)
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                            .lineLimit(2)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .multilineTextAlignment(.leading)
                     }
                 }
                 
@@ -515,11 +526,12 @@ struct ItineraryItemRow: View {
                     .foregroundColor(.secondary)
             }
             .padding(AppTheme.Spacing.md)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.md, borderTint: Color(item.category.color))
         }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("\(item.title), \(item.time), \(item.description)")
-        .accessibilityHint("Tap to view details")
+        .accessibilityLabel("\(item.title). \(item.description)")
+        .accessibilityHint("Tap to view activity details")
     }
 }
 
@@ -559,53 +571,62 @@ struct ItineraryDetailSheet: View {
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.lg) {
                     // Header
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
-                        HStack {
-                            ZStack {
-                                Circle()
-                                    .fill(Color(item.category.color).opacity(0.2))
-                                    .frame(width: 60, height: 60)
-                                
-                                Image(systemName: item.category.icon)
-                                    .font(.title)
-                                    .foregroundColor(Color(item.category.color))
-                            }
-                            
+                        HStack(alignment: .top, spacing: AppTheme.Spacing.md) {
                             VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                                 Text(item.title)
                                     .font(.title)
                                     .fontWeight(.bold)
                                     .foregroundColor(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 
                                 Text(item.category.rawValue)
                                     .font(.body)
                                     .foregroundColor(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                
+                                if let cost = item.cost {
+                                    HStack(spacing: AppTheme.Spacing.xs) {
+                                        Image(systemName: "dollarsign.circle.fill")
+                                            .foregroundColor(AppTheme.Colors.primary)
+                                        
+                                        Text("$\(Int(cost))")
+                                            .font(.title2)
+                                            .fontWeight(.bold)
+                                            .foregroundColor(AppTheme.Colors.primary)
+                                    }
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                }
                             }
-                            
-                            Spacer()
                         }
                         
-                        if let cost = item.cost {
-                            HStack {
-                                Image(systemName: "dollarsign.circle.fill")
-                                    .foregroundColor(AppTheme.Colors.primary)
+                        if let costDetails = item.costDetails, !costDetails.isEmpty {
+                            VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
+                                Text("What the cost covers")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                                    .foregroundColor(.primary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                                 
-                                Text("$\(Int(cost))")
-                                    .font(.title2)
-                                    .fontWeight(.bold)
-                                    .foregroundColor(AppTheme.Colors.primary)
+                                Text(costDetails)
+                                    .font(.footnote)
+                                    .foregroundColor(.secondary)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .multilineTextAlignment(.leading)
                             }
                         }
                     }
                     .padding(AppTheme.Spacing.lg)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg, borderTint: AppTheme.Colors.primary)
                     
                     // Details
                     VStack(alignment: .leading, spacing: AppTheme.Spacing.md) {
-                        DetailRow(icon: "clock", title: "Time", value: item.time)
-                        DetailRow(icon: "location", title: "Location", value: item.location)
-                        DetailRow(icon: "calendar", title: "Date", value: formatDate(item.date))
+                        if !item.location.isEmpty {
+                            DetailRow(icon: "mappin.and.ellipse", title: "Suggested Area", value: item.location)
+                        }
                     }
                     .padding(AppTheme.Spacing.lg)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg, borderTint: AppTheme.Colors.primary)
                     
                     // Description
@@ -614,16 +635,21 @@ struct ItineraryDetailSheet: View {
                             .font(.title3)
                             .fontWeight(.semibold)
                             .foregroundColor(.primary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         
                         Text(item.description)
                             .font(.body)
                             .foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .multilineTextAlignment(.leading)
                     }
                     .padding(AppTheme.Spacing.lg)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .liquidGlassCard(cornerRadius: AppTheme.CornerRadius.lg, borderTint: AppTheme.Colors.primary)
                 }
                 .padding(AppTheme.Spacing.md)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
             .background(
                 LiquidGlassBackground()
@@ -640,12 +666,6 @@ struct ItineraryDetailSheet: View {
                 }
             }
         }
-    }
-    
-    private func formatDate(_ date: Date) -> String {
-        let formatter = DateFormatter()
-        formatter.dateStyle = .full
-        return formatter.string(from: date)
     }
 }
 
@@ -671,10 +691,12 @@ struct DetailRow: View {
                     .font(.body)
                     .fontWeight(.medium)
                     .foregroundColor(.primary)
+                    .multilineTextAlignment(.leading)
             }
             
             Spacer()
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(title): \(value)")
     }

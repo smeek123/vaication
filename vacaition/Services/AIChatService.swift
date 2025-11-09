@@ -59,6 +59,7 @@ struct ItineraryItemResponse: Codable {
     let time: String
     let location: String
     let cost: Double?
+    let costDetails: String?
     let category: String
 }
 
@@ -261,6 +262,7 @@ class AIChatService {
                 time: item.time,
                 location: item.location,
                 cost: item.cost,
+                costDetails: item.costDetails,
                 category: category
             )
         }

@@ -69,9 +69,10 @@ struct ItineraryItem: Identifiable, Codable, Equatable, Hashable {
     var time: String
     var location: String
     var cost: Double?
+    var costDetails: String?
     var category: ActivityCategory
     
-    init(id: UUID = UUID(), title: String, description: String, date: Date, time: String, location: String, cost: Double? = nil, category: ActivityCategory) {
+    init(id: UUID = UUID(), title: String, description: String, date: Date, time: String, location: String, cost: Double? = nil, costDetails: String? = nil, category: ActivityCategory) {
         self.id = id
         self.title = title
         self.description = description
@@ -79,6 +80,7 @@ struct ItineraryItem: Identifiable, Codable, Equatable, Hashable {
         self.time = time
         self.location = location
         self.cost = cost
+        self.costDetails = costDetails
         self.category = category
     }
 }
@@ -185,6 +187,7 @@ extension Trip {
                    let categoryString = itemData["category"] as? String,
                    let category = ActivityCategory(rawValue: categoryString) {
                     let cost = itemData["cost"] as? Double
+                    let costDetails = itemData["costDetails"] as? String
                     itinerary.append(ItineraryItem(
                         id: itemId,
                         title: title,
@@ -193,6 +196,7 @@ extension Trip {
                         time: time,
                         location: location,
                         cost: cost,
+                        costDetails: costDetails,
                         category: category
                     ))
                 }

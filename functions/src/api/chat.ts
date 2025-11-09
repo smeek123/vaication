@@ -225,15 +225,29 @@ function formatTripSuggestion(tripData: any): any {
       rating: 4.0,
       amenities: ["WiFi", "Breakfast"],
     })),
-    itinerary: (tripData.activities || []).map((activity: string, index: number) => ({
-      title: activity,
-      description: "Enjoy this activity",
-      date: startDate,
-      time: "10:00 AM",
-      location: tripData.destination,
-      cost: 50,
-      category: "sightseeing",
-    })),
+    itinerary: (Array.isArray(tripData.activities) ? tripData.activities : []).map((activity: any) => {
+      const name = activity?.name || activity?.title || "Suggested experience";
+      const summary = activity?.summary || activity?.description || "Enjoy this activity";
+      const rawCost = activity?.estimatedCost ?? activity?.cost;
+      let costValue: number | undefined;
+      if (typeof rawCost === "number") {
+        costValue = Number.isFinite(rawCost) ? rawCost : undefined;
+      } else if (typeof rawCost === "string") {
+        const parsed = parseFloat(rawCost.replace(/[^0-9.]+/g, ""));
+        costValue = Number.isNaN(parsed) ? undefined : parsed;
+      }
+
+      return {
+        title: name,
+        description: summary,
+        date: startDate,
+        time: "",
+        location: activity?.location || tripData.destination,
+        cost: costValue ?? 50,
+        costDetails: activity?.costDetails || "",
+        category: activity?.category || "sightseeing",
+      };
+    }),
   };
 }
 

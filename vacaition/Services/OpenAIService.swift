@@ -346,6 +346,7 @@ class OpenAIService: ObservableObject {
                     time: "10:00 AM",
                     location: data.destination ?? "Location TBD",
                     cost: Double.random(in: 20...150),
+                    costDetails: "Estimate includes admission and any required gear.",
                     category: .entertainment
                 )
                 itinerary.append(item)
@@ -363,6 +364,7 @@ class OpenAIService: ObservableObject {
                     time: "2:00 PM",
                     location: data.destination ?? "Location TBD",
                     cost: Double.random(in: 10...50),
+                    costDetails: "Estimate covers entry fees and basic transportation.",
                     category: .sightseeing
                 )
                 itinerary.append(item)

@@ -199,11 +199,8 @@ struct ProfileView: View {
                 EmptyStateView(
                     icon: "airplane",
                     title: "No Trips Yet",
-                    description: "Start planning your first trip to see it here!",
-                    actionTitle: "Plan a Trip"
-                ) {
-                    // Navigate to chat
-                }
+                    description: "Start planning your first trip to see it here. You can create new trips anytime from the Plan tab."
+                )
             }
         }
     }
@@ -297,9 +294,17 @@ struct EmptyStateView: View {
     let icon: String
     let title: String
     let description: String
-    let actionTitle: String
-    let action: () -> Void
+    let actionTitle: String?
+    let action: (() -> Void)?
     @EnvironmentObject var themeManager: ThemeManager
+    
+    init(icon: String, title: String, description: String, actionTitle: String? = nil, action: (() -> Void)? = nil) {
+        self.icon = icon
+        self.title = title
+        self.description = description
+        self.actionTitle = actionTitle
+        self.action = action
+    }
     
     var body: some View {
         VStack(spacing: AppTheme.Spacing.lg) {
@@ -319,17 +324,19 @@ struct EmptyStateView: View {
                     .multilineTextAlignment(.center)
             }
             
-            Button(action: action) {
-                Text(actionTitle)
-                    .font(.body)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.white)
-                    .padding(.horizontal, AppTheme.Spacing.lg)
-                    .padding(.vertical, AppTheme.Spacing.md)
-                    .background(AppTheme.Colors.primary)
-                    .cornerRadius(AppTheme.CornerRadius.md)
+            if let actionTitle = actionTitle, let action = action {
+                Button(action: action) {
+                    Text(actionTitle)
+                        .font(.body)
+                        .fontWeight(.semibold)
+                        .foregroundColor(.white)
+                        .padding(.horizontal, AppTheme.Spacing.lg)
+                        .padding(.vertical, AppTheme.Spacing.md)
+                        .background(AppTheme.Colors.primary)
+                        .cornerRadius(AppTheme.CornerRadius.md)
+                }
+                .accessibilityLabel(actionTitle)
             }
-            .accessibilityLabel(actionTitle)
         }
         .frame(maxWidth: .infinity)
         .padding(AppTheme.Spacing.xl)

@@ -460,18 +460,6 @@ struct ItineraryItemRow: View {
     var body: some View {
         Button(action: onTap) {
             HStack(spacing: AppTheme.Spacing.md) {
-                // Category Icon
-                ZStack {
-                    Circle()
-                        .fill(Color(item.category.color).opacity(0.2))
-                        .frame(width: 40, height: 40)
-                    
-                    Image(systemName: item.category.icon)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(Color(item.category.color))
-                }
-                .accessibilityHidden(true)
-                
                 // Content
                 VStack(alignment: .leading, spacing: AppTheme.Spacing.xs) {
                     Text(item.title)
@@ -488,34 +476,12 @@ struct ItineraryItemRow: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .multilineTextAlignment(.leading)
                     
-                    if !item.location.isEmpty {
-                        HStack(spacing: AppTheme.Spacing.xs) {
-                            Image(systemName: "mappin.and.ellipse")
-                                .font(.caption)
-                                .foregroundColor(AppTheme.Colors.primary)
-                            Text(item.location)
-                                .font(.caption)
-                                .foregroundColor(.secondary)
-                                .lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                    }
-                    
                     if let cost = item.cost {
                         Text("Approx. $\(Int(cost)) per person")
                             .font(.caption)
                             .fontWeight(.semibold)
                             .foregroundColor(AppTheme.Colors.primary)
                             .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    
-                    if let costDetails = item.costDetails, !costDetails.isEmpty {
-                        Text(costDetails)
-                            .font(.caption2)
-                            .foregroundColor(.secondary)
-                            .lineLimit(2)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .multilineTextAlignment(.leading)
                     }
                 }
                 
